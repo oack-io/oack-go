@@ -89,6 +89,20 @@ func (c *Client) ListAlertChannels(ctx context.Context, teamID string) ([]AlertC
 	return channels, nil
 }
 
+// GetAlertChannel returns a single alert channel by ID (lists all and finds by ID).
+func (c *Client) GetAlertChannel(ctx context.Context, teamID, channelID string) (*AlertChannel, error) {
+	channels, err := c.ListAlertChannels(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	for _, ch := range channels {
+		if ch.ID == channelID {
+			return &ch, nil
+		}
+	}
+	return nil, &APIError{StatusCode: 404, Message: "alert channel not found"}
+}
+
 // UpdateAlertChannel updates an existing alert channel.
 func (c *Client) UpdateAlertChannel(
 	ctx context.Context, teamID, channelID string, params *CreateAlertChannelParams,
