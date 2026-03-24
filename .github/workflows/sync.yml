@@ -1,0 +1,106 @@
+name: API Sync Check
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Every Monday at 09:00 UTC
+  workflow_dispatch: {} # Manual trigger
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch public API spec
+        run: |
+          curl -sf https://api.oack.io/openapi.json -o /tmp/openapi.json
+          echo "Fetched $(cat /tmp/openapi.json | python3 -c "
+          import json, sys
+          spec = json.load(sys.stdin)
+          paths = spec.get('paths', {})
+          count = sum(len(m) for m in paths.values())
+          print(count)
+          ") API endpoints"
+
+      - name: Extract API endpoints
+        run: |
+          python3 -c "
+          import json
+
+          with open('/tmp/openapi.json') as f:
+              spec = json.load(f)
+
+          endpoints = set()
+          for path, methods in spec.get('paths', {}).items():
+              for method in methods:
+                  if method.upper() in ('GET','POST','PUT','DELETE','PATCH'):
+                      endpoints.add(f'{method.upper()} {path}')
+
+          with open('/tmp/api_endpoints.txt', 'w') as f:
+              for ep in sorted(endpoints):
+                  f.write(ep + '\n')
+
+          print(f'Total API endpoints: {len(endpoints)}')
+          "
+
+      - name: Extract oack-go coverage
+        run: |
+          # Extract API paths from Go source (look for path strings in do() calls)
+          grep -rh 'c\.do(ctx' *.go | \
+            grep -oP '"[A-Z]+".*?"(/api/v1/[^"]*)"' | \
+            sed 's/.*"\(GET\|POST\|PUT\|DELETE\|PATCH\)".*"\(.*\)"/\1 \2/' | \
+            # Normalize path parameters
+            sed 's/"+[^"]*+"//g; s/"+[^"]*$//; s|//|/|g' | \
+            sort -u > /tmp/client_endpoints.txt
+          echo "Client covers $(wc -l < /tmp/client_endpoints.txt) endpoint patterns"
+
+      - name: Compare and report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Count API endpoints and client methods
+          API_COUNT=$(wc -l < /tmp/api_endpoints.txt)
+          CLIENT_METHODS=$(grep -rh '^func (c \*Client)' *.go | wc -l)
+
+          echo "API endpoints: $API_COUNT"
+          echo "Client methods: $CLIENT_METHODS"
+
+          # Check for new endpoints not in client (heuristic: compare counts)
+          # A significant gap suggests new endpoints were added
+          PREV_API_COUNT=$(gh api repos/${{ github.repository }}/actions/variables/API_ENDPOINT_COUNT \
+            --jq '.value' 2>/dev/null || echo "0")
+
+          if [ "$API_COUNT" != "$PREV_API_COUNT" ] && [ "$PREV_API_COUNT" != "0" ]; then
+            DIFF=$((API_COUNT - PREV_API_COUNT))
+            if [ "$DIFF" -gt 0 ]; then
+              echo "::notice::$DIFF new API endpoints detected"
+
+              # Check if an open issue already exists
+              EXISTING=$(gh issue list --repo ${{ github.repository }} \
+                --label "api-sync" --state open --json number --jq 'length')
+
+              if [ "$EXISTING" = "0" ]; then
+                gh issue create \
+                  --repo ${{ github.repository }} \
+                  --title "API sync: $DIFF new endpoint(s) detected" \
+                  --label "api-sync" \
+                  --body "The Oack API spec has **$DIFF new endpoint(s)** since the last check.
+
+          **API endpoints:** $API_COUNT (was $PREV_API_COUNT)
+          **Client methods:** $CLIENT_METHODS
+
+          Review the [public API spec](https://api.oack.io/openapi.json) and add missing methods.
+
+          _This issue was created automatically by the API sync workflow._"
+              fi
+            fi
+          fi
+
+          # Update stored count
+          gh api --method PATCH repos/${{ github.repository }}/actions/variables/API_ENDPOINT_COUNT \
+            -f value="$API_COUNT" 2>/dev/null || \
+          gh api --method POST repos/${{ github.repository }}/actions/variables \
+            -f name="API_ENDPOINT_COUNT" -f value="$API_COUNT" 2>/dev/null || true
