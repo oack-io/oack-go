@@ -61,37 +61,69 @@ type TimelineEvent struct {
 
 // ChartEvent represents an annotation event on a team's chart.
 type ChartEvent struct {
-	ID        string  `json:"id"`
-	TeamID    string  `json:"team_id"`
-	MonitorID *string `json:"monitor_id"`
-	Kind      string  `json:"kind"`
-	Source    string  `json:"source"`
-	Title     string  `json:"title"`
-	Body      string  `json:"body"`
-	StartAt   string  `json:"start_at"`
-	EndAt     *string `json:"end_at"`
-	CreatedAt string  `json:"created_at"`
+	ID          string         `json:"id"`
+	TeamID      string         `json:"team_id"`
+	MonitorID   string         `json:"monitor_id"`
+	Source      string         `json:"source"`
+	Kind        string         `json:"kind"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	URL         string         `json:"url"`
+	Severity    string         `json:"severity"`
+	ExternalID  string         `json:"external_id"`
+	StartedAt   string         `json:"started_at"`
+	EndedAt     *string        `json:"ended_at"`
+	Metadata    map[string]any `json:"metadata"`
+	CreatedBy   string         `json:"created_by"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
 }
 
 // CreateChartEventParams holds parameters for creating a chart event.
 type CreateChartEventParams struct {
-	MonitorID *string `json:"monitor_id,omitempty"`
-	Kind      string  `json:"kind"`
-	Source    string  `json:"source"`
-	Title     string  `json:"title"`
-	Body      string  `json:"body,omitempty"`
-	StartAt   string  `json:"start_at"`
-	EndAt     *string `json:"end_at,omitempty"`
+	MonitorID   string         `json:"monitor_id,omitempty"`
+	Kind        string         `json:"kind"`
+	Title       string         `json:"title"`
+	Description string         `json:"description,omitempty"`
+	URL         string         `json:"url,omitempty"`
+	Severity    string         `json:"severity,omitempty"`
+	StartedAt   string         `json:"started_at"`
+	EndedAt     *string        `json:"ended_at,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 // UpdateChartEventParams holds parameters for updating a chart event.
 type UpdateChartEventParams struct {
-	Kind    *string `json:"kind,omitempty"`
-	Source  *string `json:"source,omitempty"`
-	Title   *string `json:"title,omitempty"`
-	Body    *string `json:"body,omitempty"`
-	StartAt *string `json:"start_at,omitempty"`
-	EndAt   *string `json:"end_at,omitempty"`
+	MonitorID   *string        `json:"monitor_id,omitempty"`
+	Kind        *string        `json:"kind,omitempty"`
+	Title       *string        `json:"title,omitempty"`
+	Description *string        `json:"description,omitempty"`
+	URL         *string        `json:"url,omitempty"`
+	Severity    *string        `json:"severity,omitempty"`
+	StartedAt   *string        `json:"started_at,omitempty"`
+	EndedAt     *string        `json:"ended_at,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
+// ChartEventListOptions configures chart event listing.
+type ChartEventListOptions struct {
+	From      string // Required, RFC3339
+	To        string // Required, RFC3339
+	MonitorID string
+	Kind      string // Comma-separated
+	Source    string // Comma-separated
+}
+
+// IngestChartEventParams holds parameters for the CI/CD event ingest endpoint.
+type IngestChartEventParams struct {
+	Kind      string         `json:"kind"`
+	Title     string         `json:"title"`
+	URL       string         `json:"url,omitempty"`
+	StartedAt *string        `json:"started_at,omitempty"`
+	EndedAt   *string        `json:"ended_at,omitempty"`
+	MonitorID *string        `json:"monitor_id,omitempty"`
+	Severity  string         `json:"severity,omitempty"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
 // TimelineListOptions configures timeline listing.
@@ -162,7 +194,7 @@ func (c *Client) ListTimeline(
 
 // chartEventBasePath returns the base URL path for chart event operations.
 func chartEventBasePath(teamID string) string {
-	return "/api/v1/teams/" + teamID + "/chart-events"
+	return "/api/v1/teams/" + teamID + "/events"
 }
 
 // CreateChartEvent creates a new chart event for a team.
@@ -180,11 +212,22 @@ func (c *Client) CreateChartEvent(
 	return &ev, nil
 }
 
-// ListChartEvents returns all chart events for a team.
+// ListChartEvents returns chart events for a team within a time range.
 func (c *Client) ListChartEvents(
-	ctx context.Context, teamID string,
+	ctx context.Context, teamID string, opts ChartEventListOptions,
 ) ([]ChartEvent, error) {
-	body, err := c.do(ctx, http.MethodGet, chartEventBasePath(teamID), nil)
+	path := chartEventBasePath(teamID) +
+		"?from=" + opts.From + "&to=" + opts.To
+	if opts.MonitorID != "" {
+		path += "&monitor_id=" + opts.MonitorID
+	}
+	if opts.Kind != "" {
+		path += "&kind=" + opts.Kind
+	}
+	if opts.Source != "" {
+		path += "&source=" + opts.Source
+	}
+	body, err := c.do(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -217,4 +260,22 @@ func (c *Client) UpdateChartEvent(
 func (c *Client) DeleteChartEvent(ctx context.Context, teamID, eventID string) error {
 	_, err := c.do(ctx, http.MethodDelete, chartEventBasePath(teamID)+"/"+eventID, nil)
 	return err
+}
+
+// IngestChartEvent creates a chart event using API key authentication (CI/CD).
+func (c *Client) IngestChartEvent(
+	ctx context.Context, teamID string, params IngestChartEventParams,
+) (*ChartEvent, error) {
+	body, err := c.do(
+		ctx, http.MethodPost,
+		chartEventBasePath(teamID)+"/ingest", params,
+	)
+	if err != nil {
+		return nil, err
+	}
+	var ev ChartEvent
+	if err := json.Unmarshal(body, &ev); err != nil {
+		return nil, fmt.Errorf("unmarshal chart event: %w", err)
+	}
+	return &ev, nil
 }

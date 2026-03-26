@@ -20,7 +20,13 @@ type Share struct {
 
 // CreateShareParams holds parameters for creating a share link.
 type CreateShareParams struct {
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	From            string   `json:"from"`
+	To              string   `json:"to"`
+	AccessMode      string   `json:"access_mode,omitempty"`
+	ExpiresIn       string   `json:"expires_in,omitempty"`
+	RedactedGroups  []string `json:"redacted_groups,omitempty"`
+	IncludeGroups   []string `json:"include_groups,omitempty"`
+	IncludeComments bool     `json:"include_comments,omitempty"`
 }
 
 // shareBasePath returns the base URL path for share operations.

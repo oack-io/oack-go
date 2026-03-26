@@ -276,3 +276,65 @@ func (c *Client) RevokeAccountInvite(ctx context.Context, accountID, inviteID st
 	)
 	return err
 }
+
+// AccountAPIKey represents an account-scoped API key (without the secret).
+type AccountAPIKey struct {
+	ID        string  `json:"id"`
+	AccountID string  `json:"account_id"`
+	Name      string  `json:"name"`
+	KeyPrefix string  `json:"key_prefix"`
+	CreatedBy string  `json:"created_by"`
+	ExpiresAt *string `json:"expires_at"`
+	CreatedAt string  `json:"created_at"`
+}
+
+// CreateAccountAPIKeyParams holds parameters for creating an account API key.
+type CreateAccountAPIKeyParams struct {
+	Name      string  `json:"name"`
+	ExpiresAt *string `json:"expires_at,omitempty"`
+}
+
+// CreateAccountAPIKeyResult holds the created key (plaintext shown only once) and metadata.
+type CreateAccountAPIKeyResult struct {
+	Key    string        `json:"key"`
+	APIKey AccountAPIKey `json:"api_key"`
+}
+
+// CreateAccountAPIKey creates a new account-scoped API key.
+func (c *Client) CreateAccountAPIKey(
+	ctx context.Context, accountID string, params CreateAccountAPIKeyParams,
+) (*CreateAccountAPIKeyResult, error) {
+	body, err := c.do(
+		ctx, http.MethodPost,
+		accountPath(accountID)+"/api-keys", params,
+	)
+	if err != nil {
+		return nil, err
+	}
+	var result CreateAccountAPIKeyResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("unmarshal account api key: %w", err)
+	}
+	return &result, nil
+}
+
+// ListAccountAPIKeys returns all API keys for an account.
+func (c *Client) ListAccountAPIKeys(
+	ctx context.Context, accountID string,
+) ([]AccountAPIKey, error) {
+	body, err := c.do(ctx, http.MethodGet, accountPath(accountID)+"/api-keys", nil)
+	if err != nil {
+		return nil, err
+	}
+	var keys []AccountAPIKey
+	if err := json.Unmarshal(body, &keys); err != nil {
+		return nil, fmt.Errorf("unmarshal account api keys: %w", err)
+	}
+	return keys, nil
+}
+
+// DeleteAccountAPIKey deletes an account API key.
+func (c *Client) DeleteAccountAPIKey(ctx context.Context, accountID, keyID string) error {
+	_, err := c.do(ctx, http.MethodDelete, accountPath(accountID)+"/api-keys/"+keyID, nil)
+	return err
+}

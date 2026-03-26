@@ -45,6 +45,15 @@ type Monitor struct {
 	CreatedBy               string            `json:"created_by"`
 	CreatedAt               string            `json:"created_at"`
 	UpdatedAt               string            `json:"updated_at"`
+
+	// Multi-location fields.
+	AggregateFailureMode  string            `json:"aggregate_failure_mode,omitempty"`
+	AggregateFailureCount int               `json:"aggregate_failure_count,omitempty"`
+	Locations             []MonitorLocation `json:"locations,omitempty"`
+
+	// Monitor type and browser config.
+	Type          string         `json:"type"`
+	BrowserConfig *BrowserConfig `json:"browser_config,omitempty"`
 }
 
 // CreateMonitorParams holds parameters for creating or updating a monitor.
@@ -71,6 +80,71 @@ type CreateMonitorParams struct {
 	CheckerCountry          string            `json:"checker_country,omitempty"`
 	ResolveOverrideIP       string            `json:"resolve_override_ip,omitempty"`
 	Status                  string            `json:"status,omitempty"`
+
+	// Multi-location fields.
+	Locations             []LocationParams `json:"locations,omitempty"`
+	AggregateFailureMode  string           `json:"aggregate_failure_mode,omitempty"`
+	AggregateFailureCount int              `json:"aggregate_failure_count,omitempty"`
+
+	// Monitor type and browser config.
+	Type          string         `json:"type,omitempty"`
+	BrowserConfig *BrowserConfig `json:"browser_config,omitempty"`
+}
+
+// BrowserConfig holds browser-specific monitor settings.
+type BrowserConfig struct {
+	ScreenshotEnabled      bool           `json:"screenshot_enabled"`
+	ScreenshotFullPage     bool           `json:"screenshot_full_page"`
+	ConsoleErrorThreshold  int            `json:"console_error_threshold"`
+	ResourceErrorThreshold int            `json:"resource_error_threshold"`
+	UserAgent              string         `json:"user_agent"`
+	ViewportWidth          int            `json:"viewport_width"`
+	ViewportHeight         int            `json:"viewport_height"`
+	WaitUntil              string         `json:"wait_until"`
+	ExtraWaitMs            int            `json:"extra_wait_ms"`
+	Mode                   string         `json:"mode,omitempty"`
+	Steps                  []BrowserStep  `json:"steps,omitempty"`
+	Script                 string         `json:"script,omitempty"`
+	ScriptEnv              []ScriptEnvVar `json:"script_env,omitempty"`
+}
+
+// BrowserStep represents a single step in a browser monitor step sequence.
+type BrowserStep struct {
+	Action       string `json:"action"`
+	Selector     string `json:"selector,omitempty"`
+	Value        string `json:"value,omitempty"`
+	URL          string `json:"url,omitempty"`
+	Attribute    string `json:"attribute,omitempty"`
+	VariableName string `json:"variable_name,omitempty"`
+	Name         string `json:"name,omitempty"`
+	TimeoutMs    int    `json:"timeout_ms,omitempty"`
+	WaitMs       int    `json:"wait_ms,omitempty"`
+}
+
+// ScriptEnvVar is an environment variable for script-mode browser monitors.
+type ScriptEnvVar struct {
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+	Secret bool   `json:"secret"`
+}
+
+// MonitorLocation represents a checker location assigned to a monitor.
+type MonitorLocation struct {
+	ID                string  `json:"id"`
+	Label             string  `json:"label"`
+	CheckerRegion     string  `json:"checker_region,omitempty"`
+	CheckerID         *string `json:"checker_id,omitempty"`
+	AssignedCheckerID *string `json:"assigned_checker_id,omitempty"`
+	HealthStatus      string  `json:"health_status"`
+	HealthDownReason  string  `json:"health_down_reason"`
+	HealthChangedAt   *string `json:"health_changed_at,omitempty"`
+}
+
+// LocationParams holds parameters for specifying a monitor location.
+type LocationParams struct {
+	CheckerID     *string `json:"checker_id,omitempty"`
+	CheckerRegion string  `json:"checker_region,omitempty"`
+	Label         string  `json:"label,omitempty"`
 }
 
 // monitorBasePath returns the base URL path for monitor operations.

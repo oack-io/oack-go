@@ -35,7 +35,10 @@ type CommentEdit struct {
 
 // CreateCommentParams holds parameters for creating a comment.
 type CreateCommentParams struct {
-	Body string `json:"body"`
+	Body       string  `json:"body"`
+	AnchorAt   *string `json:"anchor_at,omitempty"`
+	AnchorFrom *string `json:"anchor_from,omitempty"`
+	AnchorTo   *string `json:"anchor_to,omitempty"`
 }
 
 // commentBasePath returns the base URL path for comment operations on a monitor.
@@ -63,11 +66,22 @@ func (c *Client) CreateComment(
 	return &comment, nil
 }
 
-// ListComments returns all comments for a monitor.
+// CommentListOptions configures comment listing.
+type CommentListOptions struct {
+	From            string // Required, RFC3339
+	To              string // Required, RFC3339
+	IncludeResolved bool
+}
+
+// ListComments returns comments for a monitor within a time range.
 func (c *Client) ListComments(
-	ctx context.Context, teamID, monitorID string,
+	ctx context.Context, teamID, monitorID string, opts CommentListOptions,
 ) ([]Comment, error) {
-	body, err := c.do(ctx, http.MethodGet, commentBasePath(teamID, monitorID), nil)
+	path := commentBasePath(teamID, monitorID) + "?from=" + opts.From + "&to=" + opts.To
+	if opts.IncludeResolved {
+		path += "&include_resolved=true"
+	}
+	body, err := c.do(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -148,37 +162,23 @@ func (c *Client) ListReplies(
 // ResolveComment marks a comment as resolved.
 func (c *Client) ResolveComment(
 	ctx context.Context, teamID, monitorID, commentID string,
-) (*Comment, error) {
-	body, err := c.do(
+) error {
+	_, err := c.do(
 		ctx, http.MethodPost,
 		commentPath(teamID, monitorID, commentID)+"/resolve", nil,
 	)
-	if err != nil {
-		return nil, err
-	}
-	var comment Comment
-	if err := json.Unmarshal(body, &comment); err != nil {
-		return nil, fmt.Errorf("unmarshal comment: %w", err)
-	}
-	return &comment, nil
+	return err
 }
 
 // ReopenComment reopens a previously resolved comment.
 func (c *Client) ReopenComment(
 	ctx context.Context, teamID, monitorID, commentID string,
-) (*Comment, error) {
-	body, err := c.do(
+) error {
+	_, err := c.do(
 		ctx, http.MethodPost,
 		commentPath(teamID, monitorID, commentID)+"/reopen", nil,
 	)
-	if err != nil {
-		return nil, err
-	}
-	var comment Comment
-	if err := json.Unmarshal(body, &comment); err != nil {
-		return nil, fmt.Errorf("unmarshal comment: %w", err)
-	}
-	return &comment, nil
+	return err
 }
 
 // ListCommentEdits returns the edit history of a comment.
