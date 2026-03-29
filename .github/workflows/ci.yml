@@ -42,3 +42,6 @@ jobs:
 
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
+
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
