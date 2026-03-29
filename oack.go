@@ -41,6 +41,7 @@ type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	auth       AuthMethod
+	userAgent  string
 }
 
 // Option configures the client.
@@ -54,6 +55,11 @@ func WithBaseURL(url string) Option {
 // WithHTTPClient sets a custom http.Client for requests.
 func WithHTTPClient(hc *http.Client) Option {
 	return func(c *Client) { c.httpClient = hc }
+}
+
+// WithUserAgent sets the User-Agent header for all requests.
+func WithUserAgent(ua string) Option {
+	return func(c *Client) { c.userAgent = ua }
 }
 
 // New creates an Oack API client.
@@ -95,6 +101,9 @@ func (c *Client) do(ctx context.Context, method, path string, body any) ([]byte,
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
 	}
 
 	resp, err := c.httpClient.Do(req)

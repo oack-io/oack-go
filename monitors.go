@@ -106,6 +106,11 @@ type BrowserConfig struct {
 	Steps                  []BrowserStep  `json:"steps,omitempty"`
 	Script                 string         `json:"script,omitempty"`
 	ScriptEnv              []ScriptEnvVar `json:"script_env,omitempty"`
+	SuiteURL               string         `json:"suite_url,omitempty"`
+	DepsURL                string         `json:"deps_url,omitempty"`
+	PwProject              string         `json:"pw_project,omitempty"`
+	PwGrep                 string         `json:"pw_grep,omitempty"`
+	PwTag                  string         `json:"pw_tag,omitempty"`
 }
 
 // BrowserStep represents a single step in a browser monitor step sequence.
