@@ -11,7 +11,7 @@ import (
 // TestScriptParams holds parameters for a one-off script test run.
 type TestScriptParams struct {
 	Script       string            `json:"script,omitempty"`
-	Suite        string            `json:"suite,omitempty"`      // base64 tar.gz for test_suite mode
+	Suite        string            `json:"suite,omitempty"` // base64 tar.gz for test_suite mode
 	PwProject    string            `json:"pw_project,omitempty"`
 	PwGrep       string            `json:"pw_grep,omitempty"`
 	EnvOverrides map[string]string `json:"env_overrides,omitempty"`
