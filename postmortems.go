@@ -110,7 +110,7 @@ func postmortemTemplatePath(accountID string) string {
 	return fmt.Sprintf("/api/v1/accounts/%s/postmortem-templates", accountID)
 }
 
-// ── Postmortem CRUD ─────────────────────────────────────────────────────────
+// ── Postmortem CRUD
 
 // CreatePostmortem creates a postmortem for an incident.
 func (c *Client) CreatePostmortem(
@@ -197,7 +197,7 @@ func (c *Client) GeneratePostmortemShareToken(
 	return resp.ShareToken, nil
 }
 
-// ── Action Items ────────────────────────────────────────────────────────────
+// ── Action Items
 
 // CreateActionItem adds an action item to a postmortem.
 func (c *Client) CreateActionItem(
@@ -246,7 +246,7 @@ func (c *Client) DeleteActionItem(
 	return err
 }
 
-// ── Postmortem Templates ────────────────────────────────────────────────────
+// ── Postmortem Templates
 
 // CreatePostmortemTemplate creates a new postmortem template.
 func (c *Client) CreatePostmortemTemplate(

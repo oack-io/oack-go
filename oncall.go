@@ -80,7 +80,7 @@ func schedulePath(accountID, scheduleID string) string {
 	return scheduleBasePath(accountID) + "/" + scheduleID
 }
 
-// ── Schedules ────────────────────────────────────────────────────────────
+// ── Schedules
 
 // CreateSchedule creates a new on-call schedule.
 func (c *Client) CreateSchedule(
@@ -148,7 +148,7 @@ func (c *Client) DeleteSchedule(ctx context.Context, accountID, scheduleID strin
 	return err
 }
 
-// ── Overrides ────────────────────────────────────────────────────────────
+// ── Overrides
 
 // CreateOverride creates a temporary on-call override on a schedule.
 func (c *Client) CreateOverride(
@@ -197,7 +197,7 @@ func (c *Client) DeleteOverride(
 	return err
 }
 
-// ── Who's on call ────────────────────────────────────────────────────────
+// ── Who's on call
 
 // GetWhosOnCall returns the currently on-call user for each schedule in the account.
 func (c *Client) GetWhosOnCall(
