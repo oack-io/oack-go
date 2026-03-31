@@ -1195,3 +1195,401 @@ func TestDownloadBrowserHAR(t *testing.T) {
 		t.Error("empty HAR")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Services
+// ---------------------------------------------------------------------------
+
+func TestCreateService(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(Service{ID: "svc1", Name: "Payment API"})
+	})
+	s, err := c.CreateService(context.Background(), "a1", &CreateServiceParams{
+		Name: "Payment API",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ID != "svc1" {
+		t.Errorf("got %q", s.ID)
+	}
+}
+
+func TestListServices(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]Service{{ID: "svc1"}, {ID: "svc2"}})
+	})
+	services, err := c.ListServices(context.Background(), "a1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(services) != 2 {
+		t.Errorf("got %d", len(services))
+	}
+}
+
+func TestGetService(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode(Service{ID: "svc1", Name: "Payment API"})
+	})
+	s, err := c.GetService(context.Background(), "a1", "svc1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Name != "Payment API" {
+		t.Errorf("got %q", s.Name)
+	}
+}
+
+func TestUpdateService(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1")
+		assertMethod(t, r, http.MethodPut)
+		_ = json.NewEncoder(w).Encode(Service{ID: "svc1", Name: "Updated"})
+	})
+	name := "Updated"
+	s, err := c.UpdateService(context.Background(), "a1", "svc1", &UpdateServiceParams{
+		Name: &name,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Name != "Updated" {
+		t.Errorf("got %q", s.Name)
+	}
+}
+
+func TestDeleteService(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.DeleteService(context.Background(), "a1", "svc1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLinkServiceMonitors(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1/monitors")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.LinkServiceMonitors(context.Background(), "a1", "svc1", []string{"m1", "m2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestUnlinkServiceMonitor(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1/monitors/m1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.UnlinkServiceMonitor(context.Background(), "a1", "svc1", "m1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGetServiceAnalytics(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/services/svc1/analytics")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode(ServiceAnalytics{IncidentCount: 5})
+	})
+	a, err := c.GetServiceAnalytics(context.Background(), "a1", "svc1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.IncidentCount != 5 {
+		t.Errorf("got %d", a.IncidentCount)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Incidents
+// ---------------------------------------------------------------------------
+
+func TestCreateIncident(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/incidents")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(AccountIncident{ID: "inc1", Name: "API down"})
+	})
+	inc, err := c.CreateAccountIncident(context.Background(), "a1", &CreateAccountIncidentParams{
+		Name:     "API down",
+		Severity: "major",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inc.ID != "inc1" {
+		t.Errorf("got %q", inc.ID)
+	}
+}
+
+func TestListIncidents(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/incidents")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]AccountIncident{{ID: "inc1"}, {ID: "inc2"}})
+	})
+	incidents, err := c.ListAccountIncidents(context.Background(), "a1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(incidents) != 2 {
+		t.Errorf("got %d", len(incidents))
+	}
+}
+
+func TestDeleteIncident(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/incidents/inc1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	if err := c.DeleteAccountIncident(context.Background(), "a1", "inc1"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGetIncident(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/incidents/inc1")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode(AccountIncidentWithDetails{
+			AccountIncident: AccountIncident{ID: "inc1", Name: "API down"},
+			Updates:         []AccountIncidentUpdate{{ID: "u1", Status: "identified"}},
+		})
+	})
+	inc, err := c.GetAccountIncident(context.Background(), "a1", "inc1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inc.ID != "inc1" {
+		t.Errorf("got %q", inc.ID)
+	}
+	if len(inc.Updates) != 1 {
+		t.Errorf("updates: got %d", len(inc.Updates))
+	}
+}
+
+func TestAcknowledgeIncident(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/incidents/inc1/acknowledge")
+		assertMethod(t, r, http.MethodPost)
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "acknowledged"})
+	})
+	if err := c.AcknowledgeAccountIncident(context.Background(), "a1", "inc1"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// On-Call Schedules
+// ---------------------------------------------------------------------------
+
+func TestCreateSchedule(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(OnCallSchedule{ID: "sch1", Name: "Primary"})
+	})
+	s, err := c.CreateSchedule(context.Background(), "a1", &CreateScheduleParams{
+		Name:         "Primary",
+		Timezone:     "UTC",
+		RotationType: "weekly",
+		Participants: []string{"u1", "u2"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ID != "sch1" {
+		t.Errorf("got %q", s.ID)
+	}
+}
+
+func TestListSchedules(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]OnCallSchedule{{ID: "sch1"}, {ID: "sch2"}})
+	})
+	schedules, err := c.ListSchedules(context.Background(), "a1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(schedules) != 2 {
+		t.Errorf("got %d", len(schedules))
+	}
+}
+
+func TestGetSchedule(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules/sch1")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode(OnCallSchedule{ID: "sch1", Name: "Primary"})
+	})
+	s, err := c.GetSchedule(context.Background(), "a1", "sch1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Name != "Primary" {
+		t.Errorf("got %q", s.Name)
+	}
+}
+
+func TestDeleteSchedule(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules/sch1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.DeleteSchedule(context.Background(), "a1", "sch1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// On-Call Overrides
+// ---------------------------------------------------------------------------
+
+func TestCreateOverride(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules/sch1/overrides")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(OnCallOverride{ID: "ovr1", ScheduleID: "sch1"})
+	})
+	o, err := c.CreateOverride(context.Background(), "a1", "sch1", &CreateOverrideParams{
+		OriginalUserID:    "u1",
+		ReplacementUserID: "u2",
+		StartAt:           "2026-04-01T00:00:00Z",
+		EndAt:             "2026-04-02T00:00:00Z",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if o.ID != "ovr1" {
+		t.Errorf("got %q", o.ID)
+	}
+}
+
+func TestListOverrides(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules/sch1/overrides")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]OnCallOverride{{ID: "ovr1"}, {ID: "ovr2"}})
+	})
+	overrides, err := c.ListOverrides(context.Background(), "a1", "sch1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(overrides) != 2 {
+		t.Errorf("got %d", len(overrides))
+	}
+}
+
+func TestDeleteOverride(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/schedules/sch1/overrides/ovr1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.DeleteOverride(context.Background(), "a1", "sch1", "ovr1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Who's On Call
+// ---------------------------------------------------------------------------
+
+func TestGetWhosOnCall(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/now")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]WhosOnCall{
+			{ScheduleID: "sch1", UserID: "u1"},
+		})
+	})
+	info, err := c.GetWhosOnCall(context.Background(), "a1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(info) != 1 {
+		t.Errorf("got %d", len(info))
+	}
+	if info[0].UserID != "u1" {
+		t.Errorf("got %q", info[0].UserID)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Escalation Policies
+// ---------------------------------------------------------------------------
+
+func TestCreateEscalationPolicy(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/escalation-policies")
+		assertMethod(t, r, http.MethodPost)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(EscalationPolicy{
+			ID: "ep1", Name: "Default",
+			Levels: []EscalationLevel{{ScheduleID: "sch1", AckTimeoutMinutes: 5}},
+		})
+	})
+	p, err := c.CreateEscalationPolicy(context.Background(), "a1", &CreateEscalationPolicyParams{
+		Name:   "Default",
+		Levels: []EscalationLevel{{ScheduleID: "sch1", AckTimeoutMinutes: 5}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.ID != "ep1" {
+		t.Errorf("got %q", p.ID)
+	}
+}
+
+func TestListEscalationPolicies(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/escalation-policies")
+		assertMethod(t, r, http.MethodGet)
+		_ = json.NewEncoder(w).Encode([]EscalationPolicy{{ID: "ep1"}, {ID: "ep2"}})
+	})
+	policies, err := c.ListEscalationPolicies(context.Background(), "a1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(policies) != 2 {
+		t.Errorf("got %d", len(policies))
+	}
+}
+
+func TestDeleteEscalationPolicy(t *testing.T) {
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assertPath(t, r, "/api/v1/accounts/a1/oncall/escalation-policies/ep1")
+		assertMethod(t, r, http.MethodDelete)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	err := c.DeleteEscalationPolicy(context.Background(), "a1", "ep1")
+	if err != nil {
+		t.Fatal(err)
+	}
+}

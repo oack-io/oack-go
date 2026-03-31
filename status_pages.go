@@ -82,8 +82,8 @@ type CreateComponentParams struct {
 	Position      int    `json:"position"`
 }
 
-// Incident represents a status page incident.
-type Incident struct {
+// StatusPageIncident represents a status page incident.
+type StatusPageIncident struct {
 	ID           string  `json:"id"`
 	StatusPageID string  `json:"status_page_id"`
 	Title        string  `json:"title"`
@@ -95,8 +95,8 @@ type Incident struct {
 	ResolvedAt   *string `json:"resolved_at"`
 }
 
-// CreateIncidentParams holds parameters for creating an incident.
-type CreateIncidentParams struct {
+// CreateStatusPageIncidentParams holds parameters for creating a status page incident.
+type CreateStatusPageIncidentParams struct {
 	Title        string   `json:"title"`
 	Message      string   `json:"message"`
 	Severity     string   `json:"severity"`
@@ -104,16 +104,16 @@ type CreateIncidentParams struct {
 	ComponentIDs []string `json:"component_ids,omitempty"`
 }
 
-// UpdateIncidentParams holds parameters for updating an incident.
-type UpdateIncidentParams struct {
+// UpdateStatusPageIncidentParams holds parameters for updating a status page incident.
+type UpdateStatusPageIncidentParams struct {
 	Title    string `json:"title,omitempty"`
 	Message  string `json:"message,omitempty"`
 	Severity string `json:"severity,omitempty"`
 	Status   string `json:"status,omitempty"`
 }
 
-// IncidentUpdate represents an update posted to an incident.
-type IncidentUpdate struct {
+// StatusPageIncidentUpdate represents an update posted to a status page incident.
+type StatusPageIncidentUpdate struct {
 	ID         string `json:"id"`
 	IncidentID string `json:"incident_id"`
 	Message    string `json:"message"`
@@ -437,10 +437,10 @@ func (c *Client) ListComponents(
 	return components, nil
 }
 
-// CreateIncident creates a new incident on a status page.
-func (c *Client) CreateIncident(
-	ctx context.Context, accountID, pageID string, params *CreateIncidentParams,
-) (*Incident, error) {
+// CreateStatusPageIncident creates a new incident on a status page.
+func (c *Client) CreateStatusPageIncident(
+	ctx context.Context, accountID, pageID string, params *CreateStatusPageIncidentParams,
+) (*StatusPageIncident, error) {
 	body, err := c.do(
 		ctx, http.MethodPost,
 		statusPagePath(accountID, pageID)+"/incidents", params,
@@ -448,17 +448,17 @@ func (c *Client) CreateIncident(
 	if err != nil {
 		return nil, err
 	}
-	var inc Incident
+	var inc StatusPageIncident
 	if err := json.Unmarshal(body, &inc); err != nil {
-		return nil, fmt.Errorf("unmarshal incident: %w", err)
+		return nil, fmt.Errorf("unmarshal status page incident: %w", err)
 	}
 	return &inc, nil
 }
 
-// GetIncident returns a single incident by ID.
-func (c *Client) GetIncident(
+// GetStatusPageIncident returns a single status page incident by ID.
+func (c *Client) GetStatusPageIncident(
 	ctx context.Context, accountID, pageID, incidentID string,
-) (*Incident, error) {
+) (*StatusPageIncident, error) {
 	body, err := c.do(
 		ctx, http.MethodGet,
 		statusPagePath(accountID, pageID)+"/incidents/"+incidentID, nil,
@@ -466,19 +466,19 @@ func (c *Client) GetIncident(
 	if err != nil {
 		return nil, err
 	}
-	var inc Incident
+	var inc StatusPageIncident
 	if err := json.Unmarshal(body, &inc); err != nil {
-		return nil, fmt.Errorf("unmarshal incident: %w", err)
+		return nil, fmt.Errorf("unmarshal status page incident: %w", err)
 	}
 	return &inc, nil
 }
 
-// UpdateIncident updates an existing incident.
-func (c *Client) UpdateIncident(
+// UpdateStatusPageIncident updates an existing status page incident.
+func (c *Client) UpdateStatusPageIncident(
 	ctx context.Context,
 	accountID, pageID, incidentID string,
-	params *UpdateIncidentParams,
-) (*Incident, error) {
+	params *UpdateStatusPageIncidentParams,
+) (*StatusPageIncident, error) {
 	body, err := c.do(
 		ctx, http.MethodPut,
 		statusPagePath(accountID, pageID)+"/incidents/"+incidentID, params,
@@ -486,15 +486,15 @@ func (c *Client) UpdateIncident(
 	if err != nil {
 		return nil, err
 	}
-	var inc Incident
+	var inc StatusPageIncident
 	if err := json.Unmarshal(body, &inc); err != nil {
-		return nil, fmt.Errorf("unmarshal incident: %w", err)
+		return nil, fmt.Errorf("unmarshal status page incident: %w", err)
 	}
 	return &inc, nil
 }
 
-// DeleteIncident deletes an incident by ID.
-func (c *Client) DeleteIncident(
+// DeleteStatusPageIncident deletes a status page incident by ID.
+func (c *Client) DeleteStatusPageIncident(
 	ctx context.Context, accountID, pageID, incidentID string,
 ) error {
 	_, err := c.do(
@@ -504,10 +504,10 @@ func (c *Client) DeleteIncident(
 	return err
 }
 
-// ListIncidents returns all incidents for a status page.
-func (c *Client) ListIncidents(
+// ListStatusPageIncidents returns all incidents for a status page.
+func (c *Client) ListStatusPageIncidents(
 	ctx context.Context, accountID, pageID string,
-) ([]Incident, error) {
+) ([]StatusPageIncident, error) {
 	body, err := c.do(
 		ctx, http.MethodGet,
 		statusPagePath(accountID, pageID)+"/incidents", nil,
@@ -515,17 +515,17 @@ func (c *Client) ListIncidents(
 	if err != nil {
 		return nil, err
 	}
-	var incidents []Incident
+	var incidents []StatusPageIncident
 	if err := json.Unmarshal(body, &incidents); err != nil {
-		return nil, fmt.Errorf("unmarshal incidents: %w", err)
+		return nil, fmt.Errorf("unmarshal status page incidents: %w", err)
 	}
 	return incidents, nil
 }
 
-// PostIncidentUpdate posts a status update to an incident.
-func (c *Client) PostIncidentUpdate(
+// PostStatusPageIncidentUpdate posts a status update to a status page incident.
+func (c *Client) PostStatusPageIncidentUpdate(
 	ctx context.Context, accountID, pageID, incidentID, message, status string,
-) (*IncidentUpdate, error) {
+) (*StatusPageIncidentUpdate, error) {
 	body, err := c.do(
 		ctx, http.MethodPost,
 		statusPagePath(accountID, pageID)+"/incidents/"+incidentID+"/updates",
@@ -534,9 +534,9 @@ func (c *Client) PostIncidentUpdate(
 	if err != nil {
 		return nil, err
 	}
-	var u IncidentUpdate
+	var u StatusPageIncidentUpdate
 	if err := json.Unmarshal(body, &u); err != nil {
-		return nil, fmt.Errorf("unmarshal incident update: %w", err)
+		return nil, fmt.Errorf("unmarshal status page incident update: %w", err)
 	}
 	return &u, nil
 }
