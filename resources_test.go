@@ -938,48 +938,48 @@ func TestListRegions(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Watchdogs
+// Triggers (formerly Watchdogs)
 // ---------------------------------------------------------------------------
 
-func TestCreateWatchdog(t *testing.T) {
+func TestCreateTrigger(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/watchdogs")
+		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/triggers")
 		assertMethod(t, r, http.MethodPost)
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(Watchdog{ID: "w1", Severity: "major"})
+		_ = json.NewEncoder(w).Encode(Trigger{ID: "t1", Severity: "major"})
 	})
-	w, err := c.CreateWatchdog(context.Background(), "a1", "sp1", "comp1", &CreateWatchdogParams{
+	tr, err := c.CreateTrigger(context.Background(), "a1", "sp1", "comp1", &CreateTriggerParams{
 		MonitorID: "m1", Severity: "major",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if w.Severity != "major" {
-		t.Errorf("got %q", w.Severity)
+	if tr.Severity != "major" {
+		t.Errorf("got %q", tr.Severity)
 	}
 }
 
-func TestListWatchdogs(t *testing.T) {
+func TestListTriggers(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/watchdogs")
-		_ = json.NewEncoder(w).Encode([]Watchdog{{ID: "w1"}})
+		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/triggers")
+		_ = json.NewEncoder(w).Encode([]Trigger{{ID: "t1"}})
 	})
-	watchdogs, err := c.ListWatchdogs(context.Background(), "a1", "sp1", "comp1")
+	triggers, err := c.ListTriggers(context.Background(), "a1", "sp1", "comp1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(watchdogs) != 1 {
-		t.Errorf("got %d", len(watchdogs))
+	if len(triggers) != 1 {
+		t.Errorf("got %d", len(triggers))
 	}
 }
 
-func TestDeleteWatchdog(t *testing.T) {
+func TestDeleteTrigger(t *testing.T) {
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
-		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/watchdogs/w1")
+		assertPath(t, r, "/api/v1/accounts/a1/status-pages/sp1/components/comp1/triggers/t1")
 		assertMethod(t, r, http.MethodDelete)
 		w.WriteHeader(http.StatusNoContent)
 	})
-	if err := c.DeleteWatchdog(context.Background(), "a1", "sp1", "comp1", "w1"); err != nil {
+	if err := c.DeleteTrigger(context.Background(), "a1", "sp1", "comp1", "t1"); err != nil {
 		t.Fatal(err)
 	}
 }
