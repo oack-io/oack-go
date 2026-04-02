@@ -106,11 +106,21 @@ type BrowserConfig struct {
 	Steps                  []BrowserStep  `json:"steps,omitempty"`
 	Script                 string         `json:"script,omitempty"`
 	ScriptEnv              []ScriptEnvVar `json:"script_env,omitempty"`
-	SuiteURL               string         `json:"suite_url,omitempty"`
-	DepsURL                string         `json:"deps_url,omitempty"`
-	PwProject              string         `json:"pw_project,omitempty"`
-	PwGrep                 string         `json:"pw_grep,omitempty"`
-	PwTag                  string         `json:"pw_tag,omitempty"`
+	SuiteURL           string         `json:"suite_url,omitempty"`
+	DepsURL            string         `json:"deps_url,omitempty"`
+	DepsHash           string         `json:"deps_hash,omitempty"`
+	PwProject          string         `json:"pw_project,omitempty"`
+	PwGrep             string         `json:"pw_grep,omitempty"`
+	PwTag              string         `json:"pw_tag,omitempty"`
+	SuiteGitSHA        string         `json:"suite_git_sha,omitempty"`
+	SuiteGitBranch     string         `json:"suite_git_branch,omitempty"`
+	SuiteGitOrigin     string         `json:"suite_git_origin,omitempty"`
+	SuiteDeployHost    string         `json:"suite_deploy_host,omitempty"`
+	SuiteUploadedAt    string         `json:"suite_uploaded_at,omitempty"`
+	SuiteDeployedByID  string         `json:"suite_deployed_by_id,omitempty"`
+	SuiteDeployedBy    string         `json:"suite_deployed_by,omitempty"`
+	SuiteDeployedByImg string         `json:"suite_deployed_by_img,omitempty"`
+	SuiteDeployCmd     string         `json:"suite_deploy_cmd,omitempty"`
 }
 
 // BrowserStep represents a single step in a browser monitor step sequence.
