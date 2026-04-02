@@ -15,9 +15,11 @@ type DeploySuiteOpts struct {
 	PwProject string
 	PwGrep    string
 	PwTag     string
-	GitSHA    string
-	GitBranch string
-	DeployCmd string
+	GitSHA     string
+	GitBranch  string
+	GitOrigin  string
+	DeployHost string
+	DeployCmd  string
 }
 
 // DeploySuiteResult holds the response from a suite upload.
@@ -63,6 +65,12 @@ func (c *Client) DeploySuite(
 		}
 		if opts.GitBranch != "" {
 			_ = w.WriteField("git_branch", opts.GitBranch)
+		}
+		if opts.GitOrigin != "" {
+			_ = w.WriteField("git_origin", opts.GitOrigin)
+		}
+		if opts.DeployHost != "" {
+			_ = w.WriteField("deploy_host", opts.DeployHost)
 		}
 		if opts.DeployCmd != "" {
 			_ = w.WriteField("deploy_cmd", opts.DeployCmd)
