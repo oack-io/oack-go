@@ -12,9 +12,9 @@ import (
 
 // DeploySuiteOpts holds optional filters for a suite deployment.
 type DeploySuiteOpts struct {
-	PwProject string
-	PwGrep    string
-	PwTag     string
+	PwProject  string
+	PwGrep     string
+	PwTag      string
 	GitSHA     string
 	GitBranch  string
 	GitOrigin  string
